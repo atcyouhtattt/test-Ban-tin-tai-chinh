@@ -1,5 +1,7 @@
 name: "Tạo bản tin TTCK hằng ngày & Deploy"
 on:
+  push:
+    branches: [ "main" ]
   schedule:
     - cron: '0 1 * * *'
   workflow_dispatch:
