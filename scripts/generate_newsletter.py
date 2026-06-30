@@ -15,12 +15,10 @@ import sys
 import subprocess
 from datetime import datetime, timezone, timedelta
 
-import requests
+import google.generativeai as genai
 
-import requests
-
-# Dùng mô hình Gemini 1.5 Pro hoặc Flash
-MODEL = "gemini-1.5-pro-latest"
+# Dùng mô hình Gemini 1.5 Flash vì nó nhanh và có sẵn rộng rãi nhất
+MODEL = "gemini-1.5-flash"
 
 # Giờ Việt Nam (UTC+7) — vì GitHub Actions chạy theo giờ UTC
 VN_TZ = timezone(timedelta(hours=7))
@@ -71,41 +69,21 @@ MAX_CONTINUATIONS = 4  # số lần tối đa cho phép "viết tiếp" nếu b�
 
 
 def call_gemini(user_content: str, api_key: str) -> str:
-    """Gọi Google Gemini API để sinh JSON"""
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={api_key}"
+    """Gọi Google Gemini API để sinh JSON sử dụng SDK chính thức"""
+    genai.configure(api_key=api_key)
     
-    payload = {
-        "system_instruction": {
-            "parts": [{"text": SYSTEM_PROMPT}]
-        },
-        "contents": [
-            {
-                "role": "user",
-                "parts": [{"text": user_content}]
-            }
-        ],
-        "generationConfig": {
-            "responseMimeType": "application/json"
-        }
-    }
-    
-    resp = requests.post(
-        url,
-        headers={"Content-Type": "application/json"},
-        json=payload,
-        timeout=300
-    )
-    
-    if resp.status_code != 200:
-        print("Lỗi gọi Gemini API:", resp.status_code, resp.text[:2000], file=sys.stderr)
-        resp.raise_for_status()
-        
-    data = resp.json()
     try:
-        text = data["candidates"][0]["content"]["parts"][0]["text"]
-        return text.strip()
-    except (KeyError, IndexError) as e:
-        print("Lỗi parse kết quả từ Gemini API:", data, file=sys.stderr)
+        model = genai.GenerativeModel(
+            model_name=MODEL,
+            system_instruction=SYSTEM_PROMPT,
+            generation_config=genai.GenerationConfig(
+                response_mime_type="application/json",
+            )
+        )
+        response = model.generate_content(user_content)
+        return response.text.strip()
+    except Exception as e:
+        print("Lỗi gọi Gemini API qua SDK:", str(e), file=sys.stderr)
         raise e
 
 
