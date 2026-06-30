@@ -15,10 +15,11 @@ import sys
 import subprocess
 from datetime import datetime, timezone, timedelta
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
-# Dùng mô hình Gemini 1.5 Flash vì nó nhanh và có sẵn rộng rãi nhất
-MODEL = "gemini-1.5-flash"
+# Dùng mô hình Gemini 2.0 Flash (phiên bản mới nhất và nhanh nhất)
+MODEL = "gemini-2.0-flash"
 
 # Giờ Việt Nam (UTC+7) — vì GitHub Actions chạy theo giờ UTC
 VN_TZ = timezone(timedelta(hours=7))
@@ -69,18 +70,18 @@ MAX_CONTINUATIONS = 4  # số lần tối đa cho phép "viết tiếp" nếu b�
 
 
 def call_gemini(user_content: str, api_key: str) -> str:
-    """Gọi Google Gemini API để sinh JSON sử dụng SDK chính thức"""
-    genai.configure(api_key=api_key)
+    """Gọi Google Gemini API để sinh JSON sử dụng SDK chính thức mới nhất"""
+    client = genai.Client(api_key=api_key)
     
     try:
-        model = genai.GenerativeModel(
-            model_name=MODEL,
-            system_instruction=SYSTEM_PROMPT,
-            generation_config=genai.GenerationConfig(
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=user_content,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
                 response_mime_type="application/json",
             )
         )
-        response = model.generate_content(user_content)
         return response.text.strip()
     except Exception as e:
         print("Lỗi gọi Gemini API qua SDK:", str(e), file=sys.stderr)
