@@ -18,8 +18,8 @@ from datetime import datetime, timezone, timedelta
 from google import genai
 from google.genai import types
 
-# Dùng mô hình Gemini 2.0 Flash (phiên bản mới nhất và nhanh nhất)
-MODEL = "gemini-2.0-flash"
+# Dùng mô hình Gemini 1.5 Flash vì nó luôn miễn phí ở mọi tài khoản
+MODEL = "gemini-1.5-flash"
 
 # Giờ Việt Nam (UTC+7) — vì GitHub Actions chạy theo giờ UTC
 VN_TZ = timezone(timedelta(hours=7))
