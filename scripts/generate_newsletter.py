@@ -20,7 +20,7 @@ import requests
 import requests
 
 # Dùng mô hình Gemini 1.5 Pro hoặc Flash
-MODEL = "gemini-1.5-pro"
+MODEL = "gemini-1.5-pro-latest"
 
 # Giờ Việt Nam (UTC+7) — vì GitHub Actions chạy theo giờ UTC
 VN_TZ = timezone(timedelta(hours=7))
