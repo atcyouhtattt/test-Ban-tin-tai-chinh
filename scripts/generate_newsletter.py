@@ -17,8 +17,10 @@ from datetime import datetime, timezone, timedelta
 
 import requests
 
-API_URL = "https://api.anthropic.com/v1/messages"
-MODEL = "claude-sonnet-4-6"
+import requests
+
+# Dùng mô hình Gemini 1.5 Pro hoặc Flash
+MODEL = "gemini-1.5-pro"
 
 # Giờ Việt Nam (UTC+7) — vì GitHub Actions chạy theo giờ UTC
 VN_TZ = timezone(timedelta(hours=7))
@@ -68,64 +70,43 @@ MAX_TOKENS = 28000
 MAX_CONTINUATIONS = 4  # số lần tối đa cho phép "viết tiếp" nếu bị cắt giữa chừng
 
 
-def _request_claude(messages, api_key):
+def call_gemini(user_content: str, api_key: str) -> str:
+    """Gọi Google Gemini API để sinh JSON"""
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={api_key}"
+    
+    payload = {
+        "system_instruction": {
+            "parts": [{"text": SYSTEM_PROMPT}]
+        },
+        "contents": [
+            {
+                "role": "user",
+                "parts": [{"text": user_content}]
+            }
+        ],
+        "generationConfig": {
+            "responseMimeType": "application/json"
+        }
+    }
+    
     resp = requests.post(
-        API_URL,
-        headers={
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-        },
-        json={
-            "model": MODEL,
-            "max_tokens": MAX_TOKENS,
-            "system": SYSTEM_PROMPT,
-            "messages": messages,
-        },
-        timeout=300,
+        url,
+        headers={"Content-Type": "application/json"},
+        json=payload,
+        timeout=300
     )
+    
     if resp.status_code != 200:
-        print("Lỗi gọi Claude API:", resp.status_code, resp.text[:2000], file=sys.stderr)
+        print("Lỗi gọi Gemini API:", resp.status_code, resp.text[:2000], file=sys.stderr)
         resp.raise_for_status()
-    return resp.json()
-
-
-def call_claude(user_content: str, api_key: str) -> str:
-    """Gọi Claude API để sinh HTML. Nếu output bị cắt giữa chừng do hết
-    max_tokens (stop_reason == 'max_tokens'), tự động gọi tiếp để Claude
-    viết nối phần còn thiếu, ghép lại thành 1 file HTML hoàn chỉnh."""
-
-    messages = [{"role": "user", "content": user_content}]
-    full_text = ""
-
-    for attempt in range(1 + MAX_CONTINUATIONS):
-        data = _request_claude(messages, api_key)
-        parts = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
-        chunk = "\n".join(parts)
-        full_text += chunk
-
-        stop_reason = data.get("stop_reason")
-        if stop_reason != "max_tokens":
-            break  # viết xong bình thường (hoặc lỗi khác không phải do thiếu chỗ)
-
-        print(f"[CẢNH BÁO] Output bị cắt do hết max_tokens (lần {attempt + 1}), "
-              f"đang yêu cầu Claude viết tiếp...", flush=True)
-
-        # Thêm phần đã viết vào lịch sử hội thoại, yêu cầu viết tiếp đúng từ chỗ dừng
-        messages.append({"role": "assistant", "content": chunk})
-        messages.append({
-            "role": "user",
-            "content": (
-                "Nội dung bị cắt giữa chừng vì hết giới hạn độ dài. "
-                "Hãy viết tiếp CHÍNH XÁC từ chỗ bị dừng (không lặp lại phần đã viết, "
-                "không thêm lời mở đầu/giải thích) cho đến khi hoàn chỉnh toàn bộ chuỗi JSON, "
-                "kết thúc bằng dấu }."
-            ),
-        })
-    else:
-        print("[CẢNH BÁO] Đã thử viết tiếp nhiều lần nhưng vẫn chưa hoàn chỉnh.", file=sys.stderr)
-
-    return full_text.strip()
+        
+    data = resp.json()
+    try:
+        text = data["candidates"][0]["content"]["parts"][0]["text"]
+        return text.strip()
+    except (KeyError, IndexError) as e:
+        print("Lỗi parse kết quả từ Gemini API:", data, file=sys.stderr)
+        raise e
 
 
 def clean_json(text: str) -> str:
@@ -163,9 +144,9 @@ def update_index(output_dir: str, date_str: str, title: str):
 
 
 def main():
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        print("LỖI: thiếu biến môi trường ANTHROPIC_API_KEY", file=sys.stderr)
+        print("LỖI: thiếu biến môi trường GEMINI_API_KEY", file=sys.stderr)
         sys.exit(1)
 
     raw_path = "raw_sources.txt"
@@ -191,8 +172,8 @@ Tiêu đề bản tin nên là một câu ngắn bắt thời sự nhất trong 
 {raw_data}
 """
 
-    print("Đang gọi Claude API để tổng hợp bản tin...", flush=True)
-    json_text = call_claude(user_content, api_key)
+    print("Đang gọi Google Gemini API để tổng hợp bản tin...", flush=True)
+    json_text = call_gemini(user_content, api_key)
     json_text = clean_json(json_text)
 
     output_dir = "webapp/public/data"

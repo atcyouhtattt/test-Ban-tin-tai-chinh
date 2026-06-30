@@ -35,9 +35,9 @@ jobs:
       run: |
         python scripts/fetch_sources.py > raw_sources.txt
 
-    - name: Gọi Claude tạo bản tin JSON
+    - name: Gọi hệ thống tạo bản tin JSON
       env:
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
         python scripts/generate_newsletter.py
 
