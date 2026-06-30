@@ -1,0 +1,50 @@
+{
+  "title": "Dow Jones lập kỷ lục, Bitcoin áp lực dưới 60K",
+  "summary": "Thị trường toàn cầu tiếp tục hưng phấn khi Dow Jones lập đỉnh mới. Trong khi đó, dòng tiền vào Crypto có dấu hiệu chững lại và đang chờ tín hiệu vĩ mô rõ ràng hơn.",
+  "metrics": [
+    {
+      "label": "VN-Index",
+      "value": "1,250.45",
+      "trend": "up"
+    },
+    {
+      "label": "Dow Jones",
+      "value": "39,500.12",
+      "trend": "up"
+    },
+    {
+      "label": "Bitcoin",
+      "value": "$59,200",
+      "trend": "down"
+    }
+  ],
+  "sections": [
+    {
+      "id": "01",
+      "title": "Qua đêm — Toàn cầu",
+      "content": "Thị trường Mỹ ghi nhận phiên tăng điểm tích cực. Các cổ phiếu công nghệ tiếp tục dẫn dắt đà tăng.\n\n→ Tác động: Tâm lý tích cực có thể lan tỏa sang thị trường châu Á vào sáng nay."
+    },
+    {
+      "id": "02",
+      "title": "Trong nước",
+      "content": "Khối ngoại tiếp tục bán ròng nhưng lực cầu trong nước đã hấp thụ tốt, giúp chỉ số trụ vững trên mốc 1250.\n\n* Khối ngoại bán ròng tập trung ở các mã VN30.\n* Thanh khoản đạt 20 nghìn tỷ đồng."
+    },
+    {
+      "id": "03",
+      "title": "Góc nhìn & Chiến lược",
+      "content": "Đánh giá của desk cân bằng cả 2 phía, không thiên lệch, không phải khuyến nghị giao dịch.\n\nThị trường hiện tại đang đi ngang và chờ báo cáo kết quả kinh doanh quý 2. Nhà đầu tư nên duy trì tỷ trọng an toàn."
+    }
+  ],
+  "sources": [
+    {
+      "name": "Vietstock",
+      "title": "Dow Jones lập kỷ lục mới",
+      "url": "https://vietstock.vn"
+    },
+    {
+      "name": "CoinDesk",
+      "title": "Bitcoin drops below $60K",
+      "url": "https://coindesk.com"
+    }
+  ]
+}

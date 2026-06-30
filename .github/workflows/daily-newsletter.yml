@@ -1,0 +1,74 @@
+name: "Tạo bản tin TTCK hằng ngày & Deploy"
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+# Quyền cần thiết để đẩy code và deploy lên GitHub Pages
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  generate-and-build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout mã nguồn
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Cài đặt Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Cài đặt thư viện phụ thuộc Python
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Thu thập dữ liệu nguồn
+      run: |
+        python scripts/fetch_sources.py > raw_sources.txt
+
+    - name: Gọi Claude tạo bản tin JSON
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: |
+        python scripts/generate_newsletter.py
+
+    - name: Commit và Đẩy bản tin (JSON) mới lên GitHub
+      run: |
+        git config --global user.name "GitHub Action Bot"
+        git config --global user.email "actions@github.com"
+        git add webapp/public/data/
+        git diff-index --quiet HEAD || (git commit -m "Tự động cập nhật bản tin ngày $(date +'%Y-%m-%d')" && git push)
+
+    - name: Cài đặt Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Cài đặt thư viện Node và Build React App
+      working-directory: ./webapp
+      run: |
+        npm install
+        npm run build
+
+    - name: Upload thư mục dist cho GitHub Pages
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: './webapp/dist'
+
+  deploy-pages:
+    needs: generate-and-build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
