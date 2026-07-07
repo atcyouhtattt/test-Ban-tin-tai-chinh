@@ -252,8 +252,8 @@ function showReport(d){
         ['Biên gộp (%)',...fin.map(f=>f.gross_margin_pct!=null?Number(f.gross_margin_pct).toFixed(1):'—')],
         ['Biên ròng (%)',...fin.map(f=>f.net_margin_pct!=null?Number(f.net_margin_pct).toFixed(1):'—')]
       ]):''}
-      <div class="chart-box"><h4>Doanh thu và Lợi nhuận sau thuế (tỷ đồng)</h4><div class="chart-wrap"><canvas id="c1"></canvas></div></div>
-      <div class="chart-box"><h4>Biên lợi nhuận qua các năm (%)</h4><div class="chart-wrap"><canvas id="c2"></canvas></div></div>`)}
+      ${fin.length?`<div class="chart-box"><h4>Doanh thu và Lợi nhuận sau thuế (tỷ đồng)</h4><div class="chart-wrap"><canvas id="c1"></canvas></div></div>
+      <div class="chart-box"><h4>Biên lợi nhuận qua các năm (%)</h4><div class="chart-wrap"><canvas id="c2"></canvas></div></div>`:''}`)}
 
     <div class="gold-line"></div>
     ${SEC('IV','Bối cảnh Ngành và Triển vọng',`

@@ -198,19 +198,19 @@ function buildResult(tk, price, fund, analysis) {
     upside_pct: (a.target_price && price && price.price) ? +(((a.target_price - price.price) / price.price) * 100).toFixed(1) : (a.upside_pct || 0),
     recommendation: a.recommendation || 'NẮM GIỮ',
     // Chỉ số: ưu tiên API > Gemini
-    market_cap_bn: fund.market_cap_bn || a.market_cap_bn || 0,
-    shares_m: fund.shares_m || a.shares_m || 0,
-    free_float_pct: fund.free_float_pct || a.free_float_pct || 0,
-    high_52w: fund.high_52w || a.high_52w || 0,
-    low_52w: fund.low_52w || a.low_52w || 0,
-    beta: fund.beta || a.beta || 0,
-    eps: fund.eps || a.eps || 0,
-    pe: fund.pe || a.pe || 0,
-    pb: fund.pb || a.pb || 0,
-    roe_pct: fund.roe_pct != null ? fund.roe_pct : (a.roe_pct || 0),
-    roa_pct: fund.roa_pct != null ? fund.roa_pct : (a.roa_pct || 0),
-    dividend_yield_pct: fund.dividend_yield_pct || a.dividend_yield_pct || 0,
-    ev_ebitda: fund.ev_ebitda || a.ev_ebitda || 0,
+    market_cap_bn: fund.market_cap_bn || a.market_cap_bn || null,
+    shares_m: fund.shares_m || a.shares_m || null,
+    free_float_pct: fund.free_float_pct || a.free_float_pct || null,
+    high_52w: fund.high_52w || a.high_52w || null,
+    low_52w: fund.low_52w || a.low_52w || null,
+    beta: fund.beta || a.beta || null,
+    eps: fund.eps || a.eps || null,
+    pe: fund.pe || a.pe || null,
+    pb: fund.pb || a.pb || null,
+    roe_pct: fund.roe_pct != null ? fund.roe_pct : (a.roe_pct || null),
+    roa_pct: fund.roa_pct != null ? fund.roa_pct : (a.roa_pct || null),
+    dividend_yield_pct: fund.dividend_yield_pct || a.dividend_yield_pct || null,
+    ev_ebitda: fund.ev_ebitda || a.ev_ebitda || null,
     nim_pct: fund.nim_pct != null ? fund.nim_pct : (a.nim_pct != null ? a.nim_pct : null),
     car_pct: a.car_pct || null,
     npl_pct: a.npl_pct || null,
@@ -246,19 +246,17 @@ async function callGemini(tk, key, models, price, fund) {
 
   const prompt = `Bạn là Giám đốc Phân tích tại CTCK hàng đầu Việt Nam. Viết BÁO CÁO PHÂN TÍCH cho mã ${tk}.
 
-DỮ LIỆU ĐÃ CÓ SẴN:
+DỮ LIỆU ĐÃ CÓ SẴN (KHÔNG CẦN TÌM LẠI):
 - Giá: ${priceStr}
-- Chỉ số từ API: ${fundStr}
+- Chỉ số: ${fundStr}
 
-NHIỆM VỤ CỦA BẠN: 
-1. Viết phần TEXT phân tích cực kỳ chuyên sâu. 
-2. NẾU chỉ số từ API báo "chưa có từ API", bạn PHẢI TỰ TÌM KIẾM qua Google Search (Search Grounding) để lấy các chỉ số cơ bản (EPS, PE, PB, ROE, Vốn hóa tỷ VNĐ) và Lịch sử KQKD (financials - Doanh thu và Lợi nhuận tỷ VNĐ) 4 năm gần nhất (2022-2025). KHÔNG BỊA SỐ LIỆU.
+NHIỆM VỤ CỦA BẠN: CHỈ viết phần TEXT phân tích. KHÔNG bịa số liệu tài chính. Nếu đề cập số liệu, dùng số liệu đã cho ở trên hoặc tìm kiếm xác minh qua Google Search.
 
 TUYỆT ĐỐI KHÔNG dùng ký hiệu "&", luôn viết "và".
 
 Trả về JSON thuần (KHÔNG markdown, KHÔNG backticks):
 
-{"company_name":"Tên đầy đủ","ticker":"${tk}","exchange":"HOSE/HNX","sector":"Ngành","recommendation":"MUA/KHẢ QUAN/TÍCH LŨY/NẮM GIỮ/GIẢM TỶ TRỌNG/BÁN","target_price":0,"upside_pct":0,"market_cap_bn":0,"eps":0,"pe":0,"pb":0,"roe_pct":0,"financials":[{"year":"2022","revenue_bn":0,"net_profit_bn":0,"gross_margin_pct":0,"net_margin_pct":0},{"year":"2023","revenue_bn":0,"net_profit_bn":0,"gross_margin_pct":0,"net_margin_pct":0},{"year":"2024","revenue_bn":0,"net_profit_bn":0,"gross_margin_pct":0,"net_margin_pct":0},{"year":"2025","revenue_bn":0,"net_profit_bn":0,"gross_margin_pct":0,"net_margin_pct":0}],"forecast":[{"year":"2026E","revenue_bn":0,"net_profit_bn":0,"net_margin_pct":0},{"year":"2027F","revenue_bn":0,"net_profit_bn":0,"net_margin_pct":0}],"shareholders":[{"name":"Tên","pct":0}],"description":"6-8 câu chi tiết có số liệu","business_segments":"5-6 câu","recent_results":"6-8 câu KQKD mới nhất có số liệu cụ thể, so sánh cùng kỳ","outlook":"3 đoạn x 4-5 câu: triển vọng 2026, trung hạn, vĩ mô","valuation_method":"Phương pháp","valuation_rationale":"4-5 câu cơ sở định giá","risks":["2-3 câu chi tiết có số liệu"],"catalysts":["2-3 câu có timeline"],"industry_context":"6-8 câu phân tích ngành","key_projects":"4-5 câu dự án trọng điểm"}
+{"company_name":"Tên đầy đủ","ticker":"${tk}","exchange":"HOSE/HNX","sector":"Ngành","recommendation":"MUA/KHẢ QUAN/TÍCH LŨY/NẮM GIỮ/GIẢM TỶ TRỌNG/BÁN","target_price":0,"upside_pct":0,"forecast":[{"year":"2026E","revenue_bn":0,"net_profit_bn":0,"net_margin_pct":0},{"year":"2027F","revenue_bn":0,"net_profit_bn":0,"net_margin_pct":0}],"shareholders":[{"name":"Tên","pct":0}],"description":"6-8 câu chi tiết có số liệu","business_segments":"5-6 câu","recent_results":"6-8 câu KQKD mới nhất có số liệu cụ thể, so sánh cùng kỳ","outlook":"3 đoạn x 4-5 câu: triển vọng 2026, trung hạn, vĩ mô","valuation_method":"Phương pháp","valuation_rationale":"4-5 câu cơ sở định giá","risks":["2-3 câu chi tiết có số liệu","Rủi ro 2","Rủi ro 3","Rủi ro 4"],"catalysts":["2-3 câu có timeline","Xúc tác 2","Xúc tác 3"],"industry_context":"6-8 câu phân tích ngành","key_projects":"4-5 câu dự án trọng điểm"}
 
 Năm hiện tại 2026. Viết chuyên nghiệp chuẩn CTCK.`;
 
