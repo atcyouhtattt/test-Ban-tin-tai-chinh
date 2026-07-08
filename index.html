@@ -190,15 +190,73 @@ function showLoading(tk){
     <div class="ld-msg" id="lm">Lấy giá realtime và dữ liệu tài chính...</div></div>`;
 }
 
+async function getClientFundamentals(tk){
+  let f={eps:0,pe:0,pb:0,roe_pct:0,roa_pct:0,market_cap_bn:0,company_name:'',financials:[]};
+  let ratios={};
+  try{
+    const r1=await fetch('https://apipubaws.tcbs.com.vn/tcanalysis/v1/finance/'+tk+'/financialratio?yearly=1&isAll=false');
+    if(r1.ok){
+      const a=await r1.json();
+      if(a&&a.length){
+        const l=a[a.length-1];
+        f.eps=l.earningPerShare;f.pe=l.priceToEarning;f.pb=l.priceToBook;
+        if(l.roe!=null)f.roe_pct=+(l.roe*100).toFixed(1);
+        if(l.roa!=null)f.roa_pct=+(l.roa*100).toFixed(1);
+        for(let x of a) ratios[x.year]=x;
+      }
+    }
+  }catch(e){}
+  try{
+    const r2=await fetch('https://apipubaws.tcbs.com.vn/tcanalysis/v1/finance/'+tk+'/incomestatement?yearly=1&isAll=false');
+    if(r2.ok){
+      const a=await r2.json();
+      if(a&&a.length){
+        f.financials=a.slice(-4).map(x=>{
+          const r=ratios[x.year]||{};
+          return {
+            year:String(x.year),
+            revenue_bn:x.revenue!=null?+(x.revenue/1e9).toFixed(1):0,
+            net_profit_bn:(x.shareHolderIncome||x.netProfit)!=null?+((x.shareHolderIncome||x.netProfit)/1e9).toFixed(1):0,
+            gross_margin_pct:r.grossProfitMargin!=null?+(r.grossProfitMargin*100).toFixed(1):null,
+            net_margin_pct:r.netProfitMargin!=null?+(r.netProfitMargin*100).toFixed(1):null
+          }
+        });
+      }
+    }
+  }catch(e){}
+  try{
+    const r3=await fetch('https://apipubaws.tcbs.com.vn/tcanalysis/v1/ticker/'+tk+'/overview');
+    if(r3.ok){
+      const d=await r3.json();
+      if(d.marketCap) f.market_cap_bn = +(d.marketCap/1e9).toFixed(0);
+      if(d.companyName) f.company_name = d.companyName;
+    }
+  }catch(e){}
+  return f;
+}
+
 async function go(){
   const tk=(document.getElementById('ti')?.value||'').toUpperCase().trim();
   if(!tk)return;
   showLoading(tk);
   try{
-    const r=await fetch('/api/analyze?ticker='+tk);
+    const [cFund, r] = await Promise.all([
+      getClientFundamentals(tk),
+      fetch('/api/analyze?ticker='+tk)
+    ]);
     if(!r.ok)throw new Error('Lỗi kết nối: '+(await r.text()));
     const d=await r.json();
     if(d.error)throw new Error(d.error);
+    
+    if(cFund.eps) d.eps = cFund.eps;
+    if(cFund.pe) d.pe = cFund.pe;
+    if(cFund.pb) d.pb = cFund.pb;
+    if(cFund.roe_pct) d.roe_pct = cFund.roe_pct;
+    if(cFund.roa_pct) d.roa_pct = cFund.roa_pct;
+    if(cFund.market_cap_bn) d.market_cap_bn = cFund.market_cap_bn;
+    if(cFund.company_name) d.company_name = cFund.company_name;
+    if(cFund.financials.length > 0) d.financials = cFund.financials;
+    
     showReport(d);
   }catch(e){showInput(e.message)}
 }
